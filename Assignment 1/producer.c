@@ -2,8 +2,8 @@
 CSC139 
 Fall 2019
 First Assignment
-Last Name, First Name
-Section #
+Herrera, Manuel
+Section #2
 OSs Tested on: such as Linux, Mac, etc.
 */
 
@@ -16,6 +16,7 @@ OSs Tested on: such as Linux, Mac, etc.
 #include <sys/mman.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 // Size of shared memory block
 // Pass this to ftruncate and mmap
@@ -60,6 +61,10 @@ int main(int argc, char* argv[])
 	randSeed = atoi(argv[3]);
 	
 	// Write code to check the validity of the command-line arguments
+    while(!(bufSize <= 1000 && bufSize >= 2)){
+        printf("Buffer size must be between 2 - 1000");
+        exit(1);
+    }
 
     // Function that creates a shared memory segment and initializes its header
     InitShm(bufSize, itemCnt);        
@@ -95,16 +100,22 @@ void InitShm(int bufSize, int itemCnt)
 {
     int in = 0;
     int out = 0;
-	const char *name = "OS_HW1_yourName"; // Name of shared memory object to be passed to shm_open
+	const char *name = "OS_HW1_ManuelHerrera"; // Name of shared memory object to be passed to shm_open
 
      // Write code here to create a shared memory block and map it to gShmPtr
 	 // Use the above name.
+     int shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+     ftruncate(shm_fd, 4096);
+     gShmPtr = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	 // **Extremely Important: map the shared memory block for both reading and writing 
 	 // Use PROT_READ | PROT_WRITE
 	
 	// Write code here to set the values of the four integers in the header
     // Just call the functions provided below, like this
     SetBufSize(bufSize); 	
+    SetItemCnt(itemCnt);
+    SetIn(in);
+    SetOut(out);
        
 	   
 }
@@ -124,11 +135,16 @@ void Producer(int bufSize, int itemCnt, int randSeed)
 	// Use the following print statement to report the production of an item:
 	// printf("Producing Item %d with value %d at Index %d\n", i, val, in);
 	// where i is the item number, val is the item value, in is its index in the bounded buffer
-    	
-	
-	
-	
-    
+    int i = 0;
+    int val = 0;
+    while(i < itemCnt){
+        val = GetRand(0, 3000);
+        WriteAtBufIndex(in, val);
+        printf("Producing Item %d with value %d at Index %d\n", i, val, in);
+        in = (in + 1) % bufSize;
+        SetIn(in);
+        i++;
+    }  
 	printf("Producer Completed\n");
 }
 

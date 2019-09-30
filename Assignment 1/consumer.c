@@ -2,8 +2,8 @@
 CSC139 
 Fall 2019
 First Assignment
-Last Name, First Name
-Section #
+Herrera, Manuel
+Section #2
 OSs Tested on: such as Linux, Mac, etc.
 */
 
@@ -36,25 +36,31 @@ int GetHeaderVal(int);
 void WriteAtBufIndex(int, int);
 int ReadAtBufIndex(int);
 
+
 int main()
 {
-	const char *name = "OS_HW1_yourName"; // Name of shared memory block to be passed to shm_open
+
+    const char *name = "OS_HW1_ManuelHerrera"; // Name of shared memory block to be passed to shm_open
 	int bufSize; // Bounded buffer size
     int itemCnt; // Number of items to be consumed
     int in; // Index of next item to produce
     int out; // Index of next item to consume
-     
-     // Write code here to create a shared memory block and map it to gShmPtr
-	 // Use the above name
-	 // **Extremely Important: map the shared memory block for both reading and writing 
-	 // Use PROT_READ | PROT_WRITE
 
-
+    // Write code here to create a shared memory block and map it to gShmPtr
+    // Shared memory file descriptor
+    // Use the above name
+    // **Extremely Important: map the shared memory block for both reading and writing 
+    // Use PROT_READ | PROT_WRITE
+    int shm_fd = shm_open(name, O_CREAT | O_RDWR, 0666);
+    gShmPtr = mmap(0, 4096, PROT_WRITE | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 
 	// Write code here to read the four integers from the header of the shared memory block 
 	// These are: bufSize, itemCnt, in, out
 	// Just call the functions provided below like this:
     bufSize = GetBufSize();
+    itemCnt = GetItemCnt();
+    in = GetIn();
+    out = GetOut();
 	
 	// Write code here to check that the consumer has read the right values: 
  	printf("Consumer reading: bufSize = %d\n",bufSize);
@@ -66,8 +72,23 @@ int main()
 	// Use the following print statement to report the consumption of an item:
 	// printf("Consuming Item %d with value %d at Index %d\n", i, val, out);
 	// where i is the item number, val is the item value, out is its index in the bounded buffer
-                
-          
+    int i = 0;
+    // val will hold item value later
+    int val;
+    // Loop through all items.
+    while (i < itemCnt){ 
+        // Retrieve header value
+        while (GetIn() == in){
+            // item value using ReadAtBufIndex()
+            val = ReadAtBufIndex(i);
+            // Use the following print statement to report the consumption of an item:
+	        // printf("Consuming Item %d with value %d at Index %d\n", i, val, out);
+            printf("Consuming Item %d with value %d at Index %d\n", i, val, out);
+            out = (out + 1) % bufSize;
+            SetOut(out);            
+        }
+        i++;
+    }
 	// remove the shared memory segment 
 	if (shm_unlink(name) == -1) {
 		printf("Error removing %s\n",name);
